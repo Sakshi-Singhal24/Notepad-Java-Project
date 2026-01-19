@@ -66,7 +66,22 @@ public class NotepadTrail
                     //get the selected file, open it using FileOuputStream, and store it into currentFile
                     //Write the data of the textarea into the file
                     //finally update the title of jframe by the name of the file
-                    
+                    JFileChooser fileChooser=new JFileChooser();
+                    int rv=fileChooser.showSaveDialog(frame);
+                    if(rv==JFileChooser.APPROVE_OPTION)
+                    {   currentFile=fileChooser.getSelectedFile();
+
+                        try
+                        {   FileOutputStream fw=new FileOutputStream(currentFile);
+                            byte data[]=area.getText().getBytes();
+                            fw.write(data);
+                            frame.setTitle(currentFile.getName());
+                        }
+                        catch(Exception e)
+                        {
+                            System.out.println(e);                        
+                        }
+                    }
                 }
             }
         );
@@ -104,12 +119,9 @@ public class NotepadTrail
         view.add(format);
         view.add(wordWrap);
 
-
         menuBar.add(file); 
         menuBar.add(edit);
         menuBar.add(view);
-
-
 
         frame.setJMenuBar(menuBar); 
         frame.add(new JScrollPane(area));
@@ -123,6 +135,6 @@ class UseNotepadTrial
 {
         public static void main(String args[])
         {
-            NotepadTrail n1=new NotepadTrail() ;
+            NotepadTrail n1=new NotepadTrail();
         }
 }
