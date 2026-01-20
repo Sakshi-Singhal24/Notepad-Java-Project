@@ -1,7 +1,7 @@
 import javax.swing.*; 
 import java.awt.event.*;
 import java.io.*;
-public class NotepadTrail 
+public class NotepadProject 
 { 
     JFrame frame;
     JMenuBar menuBar;
@@ -11,9 +11,9 @@ public class NotepadTrail
     JMenuItem wordWrap,format;
     JTextArea area;
     File currentFile;
-    NotepadTrail()
+    NotepadProject()
     {
-        frame = new JFrame("Menu Example");
+        frame = new JFrame("Untitled");
         currentFile=null;
 
         area=new JTextArea();
@@ -24,77 +24,232 @@ public class NotepadTrail
         edit = new JMenu("Edit"); 
         view = new JMenu("View"); 
 
+        file.setMnemonic('F');
+        edit.setMnemonic('E');
+        view.setMnemonic('V');
 
         naya = new JMenuItem("New");
+        naya.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+
         open = new JMenuItem("Open"); 
+        open.setMnemonic('O');
+        open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
 
         open.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent ae){
-                JFileChooser fileChooser=new JFileChooser();
-                int rv=fileChooser.showOpenDialog(frame);
-                if(rv==JFileChooser.APPROVE_OPTION)
-                {   currentFile=fileChooser.getSelectedFile();
-
                     try
-                    {   FileInputStream fr=new FileInputStream(currentFile);
-                        int capacity=fr.available();
-                        byte data[]=new byte[capacity];
-                        fr.read(data);
-                        String textData=new String(data);
-                        area.setText(textData);
-                        frame.setTitle(currentFile.getName());
-                        //set the title of jframe, show the name of file in the title bar
-                        //if we do any changes in the file, then before opening a new file, 
-                        //a confirmation dialog box should pop up asking whether to save file 
+                    {   if((frame.getTitle()).equals("Untitled"))
+                        {
+                            if(!(area.getText().isEmpty()))
+                            {
+                                int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
+                                if(choice==JOptionPane.YES_OPTION){
+                                    JFileChooser fileChooser=new JFileChooser();
+                                    int rv=fileChooser.showSaveDialog(frame);
+                                    if(rv==JFileChooser.APPROVE_OPTION)
+                                    {   currentFile=fileChooser.getSelectedFile();
+
+                                        FileOutputStream fw=new FileOutputStream(currentFile);
+                                        byte data[]=area.getText().getBytes();
+                                        fw.write(data);
+                                        fw.close();
+                                        frame.setTitle(currentFile.getName());
+                                    }
+                                    else
+                                    {
+                                        return;
+                                    }
+                                }
+                                if(choice==JOptionPane.CANCEL_OPTION)
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if(!(area.getText().isEmpty()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            {
+                            int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
+                            if(choice==JOptionPane.YES_OPTION)
+                            {       
+                                FileOutputStream fw=new FileOutputStream(currentFile);
+                                byte data[]=area.getText().getBytes();
+                                fw.write(data);
+                                fw.close();
+                            }
+                            if(choice==JOptionPane.CANCEL_OPTION)
+                            {
+                                return;
+                            }
+                            }
+                        }       
+                                JFileChooser fileChooser=new JFileChooser();
+                                int rv=fileChooser.showOpenDialog(frame);
+                                if(rv==JFileChooser.APPROVE_OPTION)
+                                {   currentFile=fileChooser.getSelectedFile();
+                                FileInputStream fr=new FileInputStream(currentFile);
+                                int capacity=fr.available();
+                                byte data[]=new byte[capacity];
+                                fr.read(data);
+                                fr.close();
+                                String textData=new String(data);
+                                area.setText(textData);
+                                frame.setTitle(currentFile.getName());
+                                }
+                            }
+                    catch(Exception e)
+                    {
+                        System.out.println(e);                        
+                    }            
+            }
+        });
+        save = new JMenuItem("Save"); 
+        save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+        save.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent ae)
+                {
+                    try
+                    {   if((frame.getTitle()).equals("Untitled"))
+                        {
+                            JFileChooser fileChooser=new JFileChooser();
+                            int rv=fileChooser.showSaveDialog(frame);
+                            if(rv==JFileChooser.APPROVE_OPTION)
+                            {   currentFile=fileChooser.getSelectedFile();
+
+                                FileOutputStream fw=new FileOutputStream(currentFile);
+                                byte data[]=area.getText().getBytes();
+                                fw.write(data);
+                                fw.close();
+                                frame.setTitle(currentFile.getName());
+                            }
+                        }
+                        else
+                        {
+                            //agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            int choice=JOptionPane.showConfirmDialog(
+                            frame,
+                            "Saving will overwrite this file",
+                            "Warning",
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                            );
+                            if(choice==JOptionPane.OK_OPTION){
+                                FileOutputStream fw=new FileOutputStream(currentFile);
+                                byte data[]=area.getText().getBytes();
+                                fw.write(data);
+                                fw.close();
+                            }
+                        }
                     }
                     catch(Exception e)
                     {
                         System.out.println(e);                        
                     }
-                }           
-            }
-        });
-        save = new JMenuItem("Save"); 
-        save.addActionListener(
-            new ActionListener()
-            {
-                public void actionPerformed(ActionEvent ae)
-                {
-                    //show the save dialog box using the file chooser
-                    //read data of text area into a string
-                    //if approve option is pressed
-                    //get the selected file, open it using FileOuputStream, and store it into currentFile
-                    //Write the data of the textarea into the file
-                    //finally update the title of jframe by the name of the file
-                    JFileChooser fileChooser=new JFileChooser();
-                    int rv=fileChooser.showSaveDialog(frame);
-                    if(rv==JFileChooser.APPROVE_OPTION)
-                    {   currentFile=fileChooser.getSelectedFile();
-
-                        try
-                        {   FileOutputStream fw=new FileOutputStream(currentFile);
-                            byte data[]=area.getText().getBytes();
-                            fw.write(data);
-                            frame.setTitle(currentFile.getName());
-                        }
-                        catch(Exception e)
-                        {
-                            System.out.println(e);                        
-                        }
-                    }
                 }
             }
         );
         saveAs = new JMenuItem("Save As");
-        exit = new JMenuItem("Exit"); 
+        saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK|ActionEvent.SHIFT_MASK));
+        saveAs.addActionListener(
+            new ActionListener()
+            {
+                public void actionPerformed(ActionEvent ae)
+                {
+                    try
+                    {
+                        JFileChooser fileChooser=new JFileChooser();
+                        int rv=fileChooser.showSaveDialog(frame);
+                        if(rv==JFileChooser.APPROVE_OPTION)
+                        {
+                            currentFile = fileChooser.getSelectedFile();
+                            FileOutputStream fw = new FileOutputStream(currentFile);
+                            byte data[] = area.getText().getBytes();
+                            fw.write(data);
+                            fw.close();
+                            frame.setTitle(currentFile.getName());
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        System.out.println(e);
+                    }
+                }
+            }
+        );
+        exit = new JMenuItem("Exit");
+        exit.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent ae){
+                    try
+                    {   if((frame.getTitle()).equals("Untitled"))
+                        {
+                            if(!(area.getText().isEmpty()))
+                            {
+                                int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
+                                if(choice==JOptionPane.YES_OPTION){
+                                    JFileChooser fileChooser=new JFileChooser();
+                                    int rv=fileChooser.showSaveDialog(frame);
+                                    if(rv==JFileChooser.APPROVE_OPTION)
+                                    {   currentFile=fileChooser.getSelectedFile();
+
+                                        FileOutputStream fw=new FileOutputStream(currentFile);
+                                        byte data[]=area.getText().getBytes();
+                                        fw.write(data);
+                                        fw.close();
+                                        frame.setTitle(currentFile.getName());
+                                    }
+                                    else
+                                    {
+                                        return;
+                                    }
+                                }
+                                if(choice==JOptionPane.CANCEL_OPTION)
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if(!(area.getText().isEmpty()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            {
+                            int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
+                            if(choice==JOptionPane.YES_OPTION)
+                            {       
+                                FileOutputStream fw=new FileOutputStream(currentFile);
+                                byte data[]=area.getText().getBytes();
+                                fw.write(data);
+                                fw.close();
+                            }
+                            if(choice==JOptionPane.CANCEL_OPTION)
+                            {
+                                return;
+                            }
+                            }
+                        }       
+                                System.exit(0);
+                            }
+                    catch(Exception e)
+                    {
+                        System.out.println(e);                        
+                    }            
+            }
+        });
 
         cut = new JMenuItem("Cut"); 
+        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
         copy = new JMenuItem("Copy"); 
+        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
         paste = new JMenuItem("Paste");
+        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
         undo = new JMenuItem("Undo"); 
+        undo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
         redo = new JMenuItem("Redo"); 
+        redo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
         find = new JMenuItem("Find");
+        find.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
         replace = new JMenuItem("Replace"); 
+        replace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.CTRL_MASK));
         count = new JMenuItem("Count"); 
 
         format = new JMenuItem("Format");
@@ -131,10 +286,10 @@ public class NotepadTrail
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 } 
-class UseNotepadTrial
+class UseNotepadProject
 {
         public static void main(String args[])
         {
-            NotepadTrail n1=new NotepadTrail();
+            NotepadProject n1=new NotepadProject();
         }
 }
