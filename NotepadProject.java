@@ -1,6 +1,23 @@
 import javax.swing.*; 
 import java.awt.event.*;
 import java.io.*;
+class NotepadUtilities
+{
+    public static boolean isDifferent(File file,String data)
+    {
+        try
+        {   FileInputStream fr=new FileInputStream(file);
+            int capacity=fr.available();
+            byte byteData[]=new byte[capacity];
+            fr.read(byteData);
+            fr.close();   
+            return data.equals(new String(byteData));
+        }
+        catch(Exception e)
+        {   return false;   
+        }
+    }
+}
 public class NotepadProject 
 { 
     JFrame frame;
@@ -30,7 +47,95 @@ public class NotepadProject
 
         naya = new JMenuItem("New");
         naya.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+        naya.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent ae){
+        try{
+            if((frame.getTitle()).equals("Untitled")){
+                if(!(area.getText().isEmpty())){
+                    int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
+                        if(choice==JOptionPane.YES_OPTION){
+                            JFileChooser fileChooser=new JFileChooser();
+                            int rv=fileChooser.showSaveDialog(frame);
+                            if(rv==JFileChooser.APPROVE_OPTION)
+                            {   currentFile=fileChooser.getSelectedFile();
 
+                                FileOutputStream fw=new FileOutputStream(currentFile);
+                                byte data[]=area.getText().getBytes();
+                                fw.write(data);
+                                fw.close();
+                                frame.setTitle("Untitled");
+                            }
+                            area.setText("");
+                            }
+                            if(choice==JOptionPane.NO_OPTION){
+                                area.setText("");
+                            }
+                            if(choice==JOptionPane.CANCEL_OPTION)
+                                {
+                                    return;
+                                }
+                        }
+                    }
+                else{
+                    if(!NotepadUtilities.isDifferent(currentFile,area.getText())){
+                        int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
+                        if(choice==JOptionPane.YES_OPTION)
+                            {       
+                                FileOutputStream fw=new FileOutputStream(currentFile);
+                                byte data[]=area.getText().getBytes();
+                                fw.write(data);
+                                fw.close();
+                                area.setText("");
+                                frame.setTitle("Untitled");
+                                currentFile=null;
+
+                            }
+                            if(choice==JOptionPane.CANCEL_OPTION)
+                            {
+                                return;
+                            }
+                            if(choice==JOptionPane.NO_OPTION){
+                                area.setText("");
+                                frame.setTitle("Untitled");
+                                currentFile=null;
+                            }
+
+                    }
+                    else{
+                        area.setText("");
+                        frame.setTitle("Untitled");
+                        currentFile=null;
+                    }
+                }
+            }
+            catch(Exception e){
+                System.out.println(e);
+            }
+        }
+    });
+
+        //if frame is untitled
+            //data hai kya?
+                //confirmation dialog box-if u want to save or not?
+                    //save dialog box
+                    //clear text area
+                //else
+                    //clear text area
+        //else 
+            //isDifferent
+                //confirmation dialog box-if u want to save or not?
+                    //write data into file
+                    //clear text area
+                    //frame title=untitled
+                    //current file=null
+                //else
+                    //clear text area
+                    //frame title=untitled
+                    //current file=null
+            //else
+                //clear text area
+                //frame title=untitled
+                //current file=null
         open = new JMenuItem("Open"); 
         open.setMnemonic('O');
         open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
@@ -68,7 +173,7 @@ public class NotepadProject
                         }
                         else
                         {
-                            if(!(area.getText().isEmpty()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            if(!NotepadUtilities.isDifferent(currentFile,area.getText()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
                             {
                             int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
                             if(choice==JOptionPane.YES_OPTION)
@@ -126,7 +231,7 @@ public class NotepadProject
                         }
                         else
                         {
-                            //agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            if(!NotepadUtilities.isDifferent(currentFile,area.getText())){//agr changes kiye to hi option pane confimation dialog box aana chahiye 
                             int choice=JOptionPane.showConfirmDialog(
                             frame,
                             "Saving will overwrite this file",
@@ -141,6 +246,7 @@ public class NotepadProject
                                 fw.close();
                             }
                         }
+                    }
                     }
                     catch(Exception e)
                     {
@@ -211,7 +317,7 @@ public class NotepadProject
                         }
                         else
                         {
-                            if(!(area.getText().isEmpty()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            if(!NotepadUtilities.isDifferent(currentFile,area.getText()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
                             {
                             int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
                             if(choice==JOptionPane.YES_OPTION)
