@@ -1,6 +1,7 @@
 import javax.swing.*; 
 import java.awt.event.*;
 import java.io.*;
+import java.awt.*;
 class NotepadUtilities
 {
     public static boolean isDifferent(File file,String data)
@@ -48,7 +49,7 @@ public class NotepadProject
         naya = new JMenuItem("New");
         naya.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
         naya.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent ae){
+        public void actionPerformed(ActionEvent ae){
         try{
             if((frame.getTitle()).equals("Untitled")){
                 if(!(area.getText().isEmpty())){
@@ -113,29 +114,6 @@ public class NotepadProject
             }
         }
     });
-
-        //if frame is untitled
-            //data hai kya?
-                //confirmation dialog box-if u want to save or not?
-                    //save dialog box
-                    //clear text area
-                //else
-                    //clear text area
-        //else 
-            //isDifferent
-                //confirmation dialog box-if u want to save or not?
-                    //write data into file
-                    //clear text area
-                    //frame title=untitled
-                    //current file=null
-                //else
-                    //clear text area
-                    //frame title=untitled
-                    //current file=null
-            //else
-                //clear text area
-                //frame title=untitled
-                //current file=null
         open = new JMenuItem("Open"); 
         open.setMnemonic('O');
         open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
@@ -173,7 +151,7 @@ public class NotepadProject
                         }
                         else
                         {
-                            if(!NotepadUtilities.isDifferent(currentFile,area.getText()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            if(!NotepadUtilities.isDifferent(currentFile,area.getText())) 
                             {
                             int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
                             if(choice==JOptionPane.YES_OPTION)
@@ -231,7 +209,7 @@ public class NotepadProject
                         }
                         else
                         {
-                            if(!NotepadUtilities.isDifferent(currentFile,area.getText())){//agr changes kiye to hi option pane confimation dialog box aana chahiye 
+                            if(!NotepadUtilities.isDifferent(currentFile,area.getText())){ 
                             int choice=JOptionPane.showConfirmDialog(
                             frame,
                             "Saving will overwrite this file",
@@ -317,8 +295,7 @@ public class NotepadProject
                         }
                         else
                         {
-                            if(!NotepadUtilities.isDifferent(currentFile,area.getText()))//agr changes kiye to hi option pane confimation dialog box aana chahiye 
-                            {
+                            if(!NotepadUtilities.isDifferent(currentFile,area.getText())){
                             int choice=JOptionPane.showConfirmDialog(frame,"Do you want to save changes?","Confirm",JOptionPane.YES_NO_CANCEL_OPTION);
                             if(choice==JOptionPane.YES_OPTION)
                             {       
@@ -331,10 +308,12 @@ public class NotepadProject
                             {
                                 return;
                             }
+                            }       
                             }
-                        }       
                                 System.exit(0);
-                            }
+
+                        }
+
                     catch(Exception e)
                     {
                         System.out.println(e);                        
@@ -359,8 +338,98 @@ public class NotepadProject
         count = new JMenuItem("Count"); 
 
         format = new JMenuItem("Format");
-        wordWrap = new JMenuItem("Word Wrap");
+        format.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent ae){
+                JFrame formatFrame=new JFrame("Format");
+                formatFrame.setSize(400, 320);                 
+                formatFrame.setLayout(null);
 
+                JLabel label1=new JLabel("Fonts");
+                label1.setBounds(30, 20, 80, 25);
+                formatFrame.add(label1);
+
+                //System fonts, fetch karne ke liye
+                //Graphicenvironment class ka static method hai, getLocalGraphicsEnvironment(), 
+                //is se hamare pass
+                //LocalGraphicsEnvironment class ka object aata hai, is objects ke sath hamne 
+                //getAvailableFontFamilyNames() function call kiya hai, 
+                //jo ki local machine(computer) par available fonts
+                //ke names ko String array ki form me return karta hai
+
+                String[] fonts = GraphicsEnvironment.
+                                        getLocalGraphicsEnvironment().
+                                            getAvailableFontFamilyNames();
+                JComboBox <String>fontBox=new JComboBox<String>(fonts);
+                fontBox.setBounds(30, 45, 150, 25);
+                formatFrame.add(fontBox);
+
+                JLabel label2=new JLabel("Size");
+                label2.setBounds(220, 20, 80, 25);
+                formatFrame.add(label2);
+
+                String sizes[]={"10","12","14","16","20","24","30","36","42","50","60","70"};
+                JComboBox <String>sizeBox=new JComboBox<String>(sizes);
+                sizeBox.setBounds(220, 45, 60, 25);
+                formatFrame.add(sizeBox);
+
+                JCheckBox boldCheck=new JCheckBox("Bold");
+                boldCheck.setBounds(30, 80, 80, 25);
+                formatFrame.add(boldCheck);
+
+                JCheckBox italicCheck=new JCheckBox("Italics");
+                italicCheck.setBounds(120, 80, 80, 25);
+                formatFrame.add(italicCheck);
+
+                JCheckBox underlineCheck=new JCheckBox("Underlined");
+                underlineCheck.setBounds(200, 80, 120, 25);
+                formatFrame.add(underlineCheck); 
+
+                JLabel previewLabel=new JLabel("Preview Text");
+                previewLabel.setBounds(40, 105, 240, 55);
+                previewLabel.setBorder(BorderFactory.createTitledBorder("Preview"));
+                previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                previewLabel.setVerticalAlignment(SwingConstants.CENTER);
+                formatFrame.add(previewLabel);                
+
+                // Add listeners for live preview
+                ItemListener updatePreviewListener = e -> {
+                    String fontName = (String) fontBox.getSelectedItem();
+                    int fontSize = Integer.parseInt( (String) (sizeBox.getSelectedItem()));
+                    int style = Font.PLAIN;
+                    if (boldCheck.isSelected()) 
+                        style |= Font.BOLD;
+                    if (italicCheck.isSelected()) 
+                        style |= Font.ITALIC; 
+                    
+                    Font f=new Font(fontName, style, fontSize);
+                    previewLabel.setFont(f);
+                };
+                fontBox.addItemListener(updatePreviewListener);
+                sizeBox.addItemListener(updatePreviewListener);
+                boldCheck.addItemListener(updatePreviewListener);
+                italicCheck.addItemListener(updatePreviewListener);
+                JButton b=new JButton("Apply");
+                b.setBounds(110, 190, 100, 30);
+                b.addActionListener(e -> {
+                    String fontName = (String) fontBox.getSelectedItem();
+                    int fontSize = Integer.parseInt( (String) (sizeBox.getSelectedItem()));
+                    int style = Font.PLAIN;
+                    if (boldCheck.isSelected()) 
+                        style |= Font.BOLD;
+                    if (italicCheck.isSelected()) 
+                        style |= Font.ITALIC; 
+                                      
+                    Font f=new Font(fontName, style, fontSize);
+                    area.setFont(f);
+                });
+
+                formatFrame.add(b); 
+                formatFrame.setVisible(true);
+                formatFrame.setResizable(false);
+                formatFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            }
+        });
+        wordWrap = new JMenuItem("Word Wrap");
 
         file.add(naya);
         file.add(open); 
