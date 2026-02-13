@@ -2,30 +2,14 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.*;
 import java.awt.*;
-class NotepadUtilities
-{
-    public static boolean isDifferent(File file,String data)
-    {
-        try
-        {   FileInputStream fr=new FileInputStream(file);
-            int capacity=fr.available();
-            byte byteData[]=new byte[capacity];
-            fr.read(byteData);
-            fr.close();   
-            return data.equals(new String(byteData));
-        }
-        catch(Exception e)
-        {   return false;   
-        }
-    }
-}
+
 public class NotepadProject 
 { 
     JFrame frame;
     JMenuBar menuBar;
     JMenu file,edit,view;
     JMenuItem naya,open,save,saveAs,exit;
-    JMenuItem cut,copy,paste,undo,redo,find,replace,count;
+    JMenuItem cut,copy,paste,undo,redo,find,findNext,replace,count;
     JMenuItem wordWrap,format;
     JTextArea area;
     File currentFile;
@@ -35,6 +19,8 @@ public class NotepadProject
         currentFile=null;
 
         area=new JTextArea();
+        Font areaFont=NotepadUtilities.getFontFromFile();
+        area.setFont(areaFont); 
         
         menuBar = new JMenuBar(); 
         
@@ -333,6 +319,21 @@ public class NotepadProject
         redo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
         find = new JMenuItem("Find");
         find.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
+        find.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent ae){
+                doFindDialog();
+
+            }
+        });
+        findNext = new JMenuItem("Find Next");
+        findNext.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
+        findNext.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent ae){
+                doFindNext();
+
+            }
+        });
+
         replace = new JMenuItem("Replace"); 
         replace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.CTRL_MASK));
         count = new JMenuItem("Count"); 
@@ -343,6 +344,8 @@ public class NotepadProject
                 JFrame formatFrame=new JFrame("Format");
                 formatFrame.setSize(400, 320);                 
                 formatFrame.setLayout(null);
+                formatFrame.setLocation(150,150);
+
 
                 JLabel label1=new JLabel("Fonts");
                 label1.setBounds(30, 20, 80, 25);
@@ -393,15 +396,7 @@ public class NotepadProject
 
                 // Add listeners for live preview
                 ItemListener updatePreviewListener = e -> {
-                    String fontName = (String) fontBox.getSelectedItem();
-                    int fontSize = Integer.parseInt( (String) (sizeBox.getSelectedItem()));
-                    int style = Font.PLAIN;
-                    if (boldCheck.isSelected()) 
-                        style |= Font.BOLD;
-                    if (italicCheck.isSelected()) 
-                        style |= Font.ITALIC; 
-                    
-                    Font f=new Font(fontName, style, fontSize);
+                    Font f=NotepadUtilities.getSelectedFont(fontBox, sizeBox, boldCheck, italicCheck, false);
                     previewLabel.setFont(f);
                 };
                 fontBox.addItemListener(updatePreviewListener);
@@ -411,15 +406,7 @@ public class NotepadProject
                 JButton b=new JButton("Apply");
                 b.setBounds(110, 190, 100, 30);
                 b.addActionListener(e -> {
-                    String fontName = (String) fontBox.getSelectedItem();
-                    int fontSize = Integer.parseInt( (String) (sizeBox.getSelectedItem()));
-                    int style = Font.PLAIN;
-                    if (boldCheck.isSelected()) 
-                        style |= Font.BOLD;
-                    if (italicCheck.isSelected()) 
-                        style |= Font.ITALIC; 
-                                      
-                    Font f=new Font(fontName, style, fontSize);
+                    Font f=NotepadUtilities.getSelectedFont(fontBox, sizeBox, boldCheck, italicCheck, true);
                     area.setFont(f);
                 });
 
@@ -443,6 +430,7 @@ public class NotepadProject
         edit.add(undo);
         edit.add(redo);
         edit.add(find);
+        edit.add(findNext);
         edit.add(replace);
         edit.add(count);
 
@@ -460,6 +448,80 @@ public class NotepadProject
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
+    String lastFind = "";
+        boolean lastFindCaseInsensitive = false;
+        int lastFindPos = 0;
+
+        private void doFindDialog()
+        {
+            JPanel p = new JPanel(new GridLayout(0, 1, 6, 6));
+            JTextField tf = new JTextField(lastFind);
+            JCheckBox caseInsensitive = new JCheckBox("Case-insensitive", lastFindCaseInsensitive);
+
+            p.add(new JLabel("Find what:"));
+            p.add(tf);
+            p.add(caseInsensitive);
+
+            int rv = JOptionPane.showConfirmDialog(
+                    frame,
+                    p,
+                    "Find",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (rv == JOptionPane.OK_OPTION)
+            {
+                lastFind = tf.getText();
+                lastFindCaseInsensitive = caseInsensitive.isSelected();
+                lastFindPos = Math.max(area.getCaretPosition(), 0);
+                findAndSelectNext();
+            }
+        }
+        private void findAndSelectNext()
+        {
+            String content = area.getText();
+            String target = lastFind;
+
+            if (target == null || target.isEmpty())
+                return;
+
+            String hay = content;
+            String needle = target;
+
+            if (lastFindCaseInsensitive)
+            {
+                hay = content.toLowerCase();
+                needle = target.toLowerCase();
+            }
+
+            int idx = hay.indexOf(needle, lastFindPos);
+
+            if (idx == -1 && lastFindPos > 0)
+                idx = hay.indexOf(needle, 0); // wrap to beginning
+
+            if (idx >= 0)
+            {
+                area.requestFocusInWindow();
+                area.select(idx, idx + target.length());
+                lastFindPos = idx + target.length();
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(frame, "Not found.");
+            }
+        }
+        private void doFindNext()
+        {
+            if (lastFind == null || lastFind.isEmpty())
+                doFindDialog();
+            else
+                if (lastFindPos <= 0)
+                    lastFindPos = area.getCaretPosition();
+
+            findAndSelectNext();
+        }
+        
 } 
 class UseNotepadProject
 {
