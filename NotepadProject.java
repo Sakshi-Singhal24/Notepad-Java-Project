@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.*;
 import java.awt.*;
+import javax.swing.event.*;
+import javax.swing.undo.*;
 
 public class NotepadProject 
 { 
@@ -13,6 +15,8 @@ public class NotepadProject
     JMenuItem wordWrap,format;
     JTextArea area;
     File currentFile;
+    UndoManager undoManager= new UndoManager();
+    boolean isWrapEnable=false;
     NotepadProject()
     {
         frame = new JFrame("Untitled");
@@ -21,6 +25,13 @@ public class NotepadProject
         area=new JTextArea();
         Font areaFont=NotepadUtilities.getFontFromFile();
         area.setFont(areaFont); 
+
+        area.getDocument().addUndoableEditListener(new UndoableEditListener() {
+            public void undoableEditHappened(UndoableEditEvent e) {
+                undoManager.addEdit(e.getEdit());
+                updateUndoRedoState();
+            }
+        });
         
         menuBar = new JMenuBar(); 
         
@@ -32,6 +43,8 @@ public class NotepadProject
         edit.setMnemonic('E');
         view.setMnemonic('V');
 
+
+        //New functionality
         naya = new JMenuItem("New");
         naya.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
         naya.addActionListener(new ActionListener(){
@@ -100,6 +113,9 @@ public class NotepadProject
             }
         }
     });
+
+
+        //Open functionality
         open = new JMenuItem("Open"); 
         open.setMnemonic('O');
         open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
@@ -173,6 +189,9 @@ public class NotepadProject
                     }            
             }
         });
+
+
+        //Save functionality
         save = new JMenuItem("Save"); 
         save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         save.addActionListener(new ActionListener(){
@@ -217,8 +236,10 @@ public class NotepadProject
                         System.out.println(e);                        
                     }
                 }
-            }
-        );
+            });
+
+
+        //Save as functionality
         saveAs = new JMenuItem("Save As");
         saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK|ActionEvent.SHIFT_MASK));
         saveAs.addActionListener(
@@ -245,8 +266,10 @@ public class NotepadProject
                         System.out.println(e);
                     }
                 }
-            }
-        );
+            });
+
+
+        //Exit functionality
         exit = new JMenuItem("Exit");
         exit.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent ae){
@@ -307,16 +330,61 @@ public class NotepadProject
             }
         });
 
-        cut = new JMenuItem("Cut"); 
+        //Cut functionality
+        cut = new JMenuItem("Cut");
         cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
-        copy = new JMenuItem("Copy"); 
+        cut.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                area.cut();
+            }
+        });
+
+        //Copy functionality
+        copy = new JMenuItem("Copy");
         copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+        copy.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                area.copy();
+            }
+        });
+
+        //Paste functionality
         paste = new JMenuItem("Paste");
         paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
+        paste.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                area.paste();
+            }
+        });
+
+        //Undo functionality
         undo = new JMenuItem("Undo"); 
         undo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
-        redo = new JMenuItem("Redo"); 
+        undo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                if(undoManager.canUndo()) {
+                    undoManager.undo();
+                }
+                updateUndoRedoState();
+            }
+        });
+
+
+        //Redo functionality
+        redo = new JMenuItem("Redo");
         redo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
+        redo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                if(undoManager.canRedo()) {
+                    undoManager.redo();
+                }
+                updateUndoRedoState();
+            }
+        });
+        updateUndoRedoState();
+
+
+        //Find functionality
         find = new JMenuItem("Find");
         find.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
         find.addActionListener(new ActionListener(){
@@ -325,6 +393,8 @@ public class NotepadProject
 
             }
         });
+
+        //Find next functionality
         findNext = new JMenuItem("Find Next");
         findNext.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
         findNext.addActionListener(new ActionListener(){
@@ -334,10 +404,36 @@ public class NotepadProject
             }
         });
 
-        replace = new JMenuItem("Replace"); 
-        replace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.CTRL_MASK));
-        count = new JMenuItem("Count"); 
+        //Replace functionality
+        replace = new JMenuItem("Replace");
+        replace.addActionListener(
+            new ActionListener(){
+                public void actionPerformed(ActionEvent ae){
+                    doReplaceDialog();
+                }
+            });
+        replace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK));
+        // this is the code to prevent default behaviour of textarea shortcuts
+        area.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("control H"), "none");
 
+
+
+        count = new JMenuItem("Count");
+        count.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                String text = area.getText();
+                int characters = text.length();
+                String trimmed = text.trim();
+                int words = trimmed.isEmpty() ? 0 : trimmed.split("\\s+").length;
+                int lines = text.isEmpty() ? 0 : text.split("\n").length;
+
+                JOptionPane.showMessageDialog(frame,
+                    "Words: " + words + "\nCharacters: " + characters + "\nLines: " + lines);
+            }
+        });
+
+
+        //Format functionality 
         format = new JMenuItem("Format");
         format.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent ae){
@@ -416,7 +512,20 @@ public class NotepadProject
                 formatFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             }
         });
+
+        //Word wrap functionality 
         wordWrap = new JMenuItem("Word Wrap");
+        wordWrap.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
+        wordWrap.addActionListener(
+            new ActionListener()
+            {
+                public void actionPerformed(ActionEvent ae)
+                {
+                    isWrapEnable = !isWrapEnable;
+                    area.setLineWrap(isWrapEnable);
+                }
+            });
+
 
         file.add(naya);
         file.add(open); 
@@ -448,7 +557,11 @@ public class NotepadProject
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
-    String lastFind = "";
+        private void updateUndoRedoState(){
+            undo.setEnabled(undoManager.canUndo());
+            redo.setEnabled(undoManager.canRedo());
+        }
+        String lastFind = "";
         boolean lastFindCaseInsensitive = false;
         int lastFindPos = 0;
 
@@ -521,8 +634,155 @@ public class NotepadProject
 
             findAndSelectNext();
         }
-        
-} 
+        private void doReplaceDialog()
+        {
+            JPanel p = new JPanel(new GridLayout(0, 1, 6, 6));
+            JTextField tfFind = new JTextField(lastFind);
+            JTextField tfReplace = new JTextField("");
+            JCheckBox caseInsensitive = new JCheckBox("Case-insensitive", lastFindCaseInsensitive);
+            p.add(new JLabel("Find what:"));
+            p.add(tfFind);
+            p.add(new JLabel("Replace with:"));
+            p.add(tfReplace);
+            p.add(caseInsensitive);
+            Object[] options = { "Replace", "Replace All", "Cancel" };
+            int choice = JOptionPane.showOptionDialog(
+                    frame,
+                    p,
+                    "Replace",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    options,
+                    options[0]
+            );
+            String target = tfFind.getText();
+            String replacement = tfReplace.getText();
+            boolean ci = caseInsensitive.isSelected();
+            lastFind = target != null ? target : "";
+            lastFindCaseInsensitive = ci;
+            if (choice == 0)
+            {
+                lastFindPos = Math.max(area.getCaretPosition(), 0);
+                replaceNext(target, replacement, ci);
+            }
+            else if (choice == 1)   
+            {
+                int count = replaceAll(target, replacement, ci);
+                JOptionPane.showMessageDialog(frame,"Replaced " + count + " occurrence(s).");
+            }
+            else
+            {
+            }
+        }
+        private void replaceNext(String target, String replacement, boolean caseInsensitive)
+        {
+            if (target == null || target.isEmpty())
+            {
+                return;
+            }
+
+            int selStart = area.getSelectionStart();
+            int selEnd = area.getSelectionEnd();
+
+            if (selEnd > selStart)
+            {
+                String selected = area.getSelectedText();
+                String a = selected;
+                String b = target;
+
+                if (caseInsensitive)
+                {
+                    a = a.toLowerCase();
+                    b = b.toLowerCase();
+                }
+
+                if (a.equals(b))
+                {
+                    area.replaceRange(replacement, selStart, selEnd);
+                    lastFindPos = selStart + replacement.length();
+                    area.setCaretPosition(lastFindPos);
+                    findAndSelectNext();
+                    return;
+                }
+            }
+
+            String content = area.getText();
+            String hay = content;
+            String needle = target;
+
+            if (caseInsensitive)
+            {
+                hay = content.toLowerCase();
+                needle = target.toLowerCase();
+            }
+
+            int startFrom = Math.max(0, Math.min(lastFindPos, content.length()));
+            startFrom = Math.max(startFrom,
+                    Math.min(area.getCaretPosition(), content.length()));
+
+            int idx = hay.indexOf(needle, startFrom);
+
+            if (idx == -1 && startFrom > 0)
+            {
+                idx = hay.indexOf(needle, 0);
+            }
+
+            if (idx >= 0)
+            {
+                area.requestFocusInWindow();
+                area.select(idx, idx + target.length());
+                area.replaceRange(replacement, idx, idx + target.length());
+                lastFindPos = idx + replacement.length();
+                findAndSelectNext();
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(frame, "Not found.");
+            }
+        }
+        private int replaceAll(String target, String replacement, boolean caseInsensitive)
+{
+    if(target == null || target.isEmpty())
+        return 0;
+
+    String original = area.getText();
+    String hay = caseInsensitive ? original.toLowerCase() : original;
+    String needle = caseInsensitive ? target.toLowerCase() : target;
+    int count = 0;
+    int fromIndex = 0;
+    int idx = -1;
+
+    StringBuilder sb = new StringBuilder();
+
+    while(true)
+    {
+        idx = hay.indexOf(needle, fromIndex);
+        if(idx == -1)
+        {
+            sb.append(original.substring(fromIndex));
+            break;
+        }
+
+        sb.append(original.substring(fromIndex, idx));
+        sb.append(replacement);
+        count++;
+
+        int nextStart = idx + needle.length();
+        fromIndex = nextStart;
+    }
+
+    if(count > 0)
+    {
+        area.setText(sb.toString());
+        area.setCaretPosition(Math.min(area.getText().length(), Math.max(0, area.getCaretPosition())));
+        lastFindPos = 0;
+    }
+
+    return count;
+}
+
+        } 
 class UseNotepadProject
 {
         public static void main(String args[])
