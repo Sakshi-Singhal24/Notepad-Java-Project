@@ -39,4 +39,4 @@ This project focuses on GUI design, event-driven programming, and file handling,
 
 
 # Acknowledgement
-Special thanks to my teacher for guiding me throughout this project and helping me understand the concepts in a practical and practical way. His support made this project much more meaningful and insightful.
+Special thanks to my teacher for guiding me throughout this project and helping me understand the concepts in a practical way. His support made this project much more meaningful and insightful.
