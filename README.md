@@ -27,7 +27,7 @@ This project focuses on GUI design, event-driven programming, and file handling,
 # How to Run
 1. Clone the repository  
 2. Open the project in any Java IDE (Eclipse / IntelliJ / VS Code)  
-3. Run the file: `UseNotepadProject.java`
+3. Run the file: [`UseNotepadProject.java`](https://github.com/Sakshi-Singhal24/Notepad-Java-Project/blob/main/NotepadProject.java)
 
 
 # Key Learnings
